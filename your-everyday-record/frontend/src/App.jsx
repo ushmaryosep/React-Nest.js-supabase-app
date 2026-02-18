@@ -1,59 +1,78 @@
 import React, { useState } from 'react';
-import './App.css'; 
+import { motion } from 'framer-motion';
+import './App.css';
+
+const emotions = ['😊 Happy', '😔 Sad', '😌 Satisfied', '🤩 Excited', '😰 Anxious'];
 
 export default function App() {
-  const [form, setForm] = useState({ emotion: '', description: '', energy: 5 });
+  const [entry, setEntry] = useState({ emotion: '', description: '', energy: 5 });
 
   const handleSave = async () => {
-    if (!form.description || !form.emotion) return alert("Please fill in today's record!");
+    if (!entry.description) return alert("Please share your thoughts.");
     
-    await fetch('/api/journal', {
+    // Calls our Nest.js backend
+    const res = await fetch('/api/journal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        emotion_summary: form.emotion,
-        description: form.description,
-        energy_level: parseInt(form.energy)
-      })
+        emotion_summary: entry.emotion,
+        description: entry.description,
+        energy_level: parseInt(entry.energy)
+      }),
     });
-    alert("Record Saved! ✨");
+    if (res.ok) alert("Entry saved safely. ✨");
   };
 
   return (
-    <div className="app-container">
-      {/* 🌀 Landing Header */}
-      <header className="floating-header">
-        <div className="orb"></div>
-        <h1>YOUR EVERYDAY RECORD</h1>
-        <p>“Write down what today meant to you.”</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F9FAFB] p-4">
+      {/* 🌀 Looping Floating Animation */}
+      <header className="text-center mb-12 relative">
+        <motion.div 
+          animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 6, repeat: Infinity }}
+          className="absolute -top-10 left-1/2 -translate-x-1/2 w-40 h-40 bg-indigo-200 rounded-full blur-3xl -z-10"
+        />
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">YOUR EVERYDAY RECORD</h1>
+        <p className="text-gray-500 italic mt-2">“Write down what today meant to you.”</p>
       </header>
 
-      {/* ✍️ Form Card */}
-      <div className="journal-card">
-        <h3>How are you feeling?</h3>
-        <div className="emotion-btns">
-          {['😊 Happy', '😔 Sad', '😌 Satisfied', '🤩 Excited', '😰 Anxious'].map(emo => (
+      {/* ✍️ Centered Card */}
+      <motion.div 
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="w-full max-w-md bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100"
+      >
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">How do you feel?</p>
+        <div className="flex flex-wrap gap-2 mb-8">
+          {emotions.map(emo => (
             <button 
-              key={emo} 
-              className={form.emotion === emo ? 'active' : ''}
-              onClick={() => setForm({...form, emotion: emo})}
+              key={emo}
+              onClick={() => setEntry({...entry, emotion: emo})}
+              className={`px-4 py-2 rounded-full text-sm transition-all ${entry.emotion === emo ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
             >
               {emo}
             </button>
           ))}
         </div>
 
-        <h3>Describe Your Experience</h3>
         <textarea 
           placeholder="What happened today?"
-          onChange={(e) => setForm({...form, description: e.target.value})}
+          className="w-full p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-100 h-32 resize-none transition-all"
+          onChange={(e) => setEntry({...entry, description: e.target.value})}
         />
 
-        <h3>Energy Level: {form.energy}</h3>
-        <input type="range" min="1" max="10" onChange={(e) => setForm({...form, energy: e.target.value})} />
+        <div className="mt-8">
+          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Energy: {entry.energy}</label>
+          <input type="range" min="1" max="10" value={entry.energy} className="w-full mt-4 accent-indigo-600" onChange={(e) => setEntry({...entry, energy: e.target.value})} />
+        </div>
 
-        <button className="save-btn" onClick={handleSave}>Save Today's Record</button>
-      </div>
+        <button 
+          onClick={handleSave}
+          className="w-full mt-10 bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 transition-colors shadow-lg"
+        >
+          Save Today's Record
+        </button>
+      </motion.div>
     </div>
   );
 }
