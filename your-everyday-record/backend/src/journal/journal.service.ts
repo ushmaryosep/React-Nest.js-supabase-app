@@ -1,30 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { createClient, SupabaseClient } from '@supabase/supabase-client';
+import { createClient } from '@supabase/supabase-client';
 
 @Injectable()
 export class JournalService {
-  private supabase: SupabaseClient;
+  // Pulls from the Vercel Environment Variables you already set up
+  private supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_ANON_KEY
+  );
 
-  constructor() {
-    this.supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_ANON_KEY
-    );
-  }
-
-  async findAll() {
-    const { data, error } = await this.supabase
-      .from('journal_entries')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) throw error;
+  async getAll() {
+    const { data } = await this.supabase.from('journal_entries').select('*').order('created_at', { ascending: false });
     return data;
   }
 
-  async create(entry: any) {
-    const { data, error } = await this.supabase
-      .from('journal_entries')
-      .insert([entry]);
+  async create(payload) {
+    const { data, error } = await this.supabase.from('journal_entries').insert([payload]);
     if (error) throw error;
     return data;
   }
